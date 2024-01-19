@@ -68,7 +68,7 @@
            nu        , & ! unit number
            nbits         ! no. of bits per variable (0 for sequential access)
 
-      character (len=*), intent(in) :: filename
+      character (*) :: filename
 !
 !EOP
 !
@@ -475,7 +475,7 @@
 ! !INPUT/OUTPUT PARAMETERS:
 !
 
-      character (len=*), intent(in) :: & 
+      character (char_len_long), intent(in) :: & 
            filename      ! netCDF filename
 
       integer (kind=int_kind), intent(out) :: &
@@ -493,7 +493,7 @@
           status = nf90_open(filename, NF90_NOWRITE, fid)
           if (status /= nf90_noerr) then
              call abort_ice ( & 
-                   'ice_open_nc: Cannot open '//trim(filename)//'BLAH')
+                   'ice_open_nc: Cannot open '//trim(filename) )
           endif
 
       endif                      ! my_task = master_task
@@ -541,7 +541,12 @@
       logical (kind=log_kind), intent(in) :: &
            diag              ! if true, write diagnostic output
 
-      character (len=*), intent(in) :: & 
+#ifndef AusCOM		
+                             !somehow 'character (char_len)' can't pass compiling?!
+      character (char_len), intent(in) :: & 
+#else
+      character*(*), intent(in) :: &
+#endif
            varname           ! field name in netcdf file
 
       real (kind=dbl_kind), dimension(nx_block,ny_block,max_blocks), &
@@ -690,7 +695,11 @@
            fid           , & ! file id
            nrec              ! record number 
 
-      character (len=*), intent(in) :: &
+#ifndef AusCOM
+     character (char_len), intent(in) :: & 
+#else
+     character*(*), intent(in) :: &
+#endif
            varname           ! field name in netcdf file        
 
       real (kind=dbl_kind), dimension(nx_global,ny_global), &
@@ -813,7 +822,7 @@
            fid           , & ! file id
            nrec              ! record number 
 
-      character (len=*), intent(in) :: & 
+     character (char_len), intent(in) :: & 
            varname           ! field name in netcdf file        
 
       real (kind=dbl_kind), dimension(nx_global,ny_global,4), &
@@ -932,7 +941,7 @@
       logical (kind=log_kind), intent(in) :: &
            diag              ! if true, write diagnostic output
 
-      character (len=*), intent(in) :: & 
+      character (char_len), intent(in) :: & 
            varname           ! field name in netcdf file
 
       real (kind=dbl_kind), &

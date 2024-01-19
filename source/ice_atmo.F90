@@ -24,7 +24,6 @@
 !
       use ice_kinds_mod
       use ice_constants
-
 !
 !EOP
 !
@@ -172,6 +171,7 @@
       !------------------------------------------------------------
       ! Define functions
       !------------------------------------------------------------
+
       psimhu(xd)  = log((c1+xd*(c2+xd))*(c1+xd*xd)/c8) &
                   - c2*atan(xd) + pih
 !ech                  - c2*atan(xd) + 1.571_dbl_kind

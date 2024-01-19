@@ -1,0 +1,53 @@
+I=identical with cice4.0
+C=changed by CICE developers
+M=modified to work with ACCESS/AusCOM
+A=AusCOM preprocessing flags or 
+explicitly listed as modified by
+CSIRO
+V=file is vanished
+N=new file
+
+ice_age.F90 I
+ice_atmo.F90 I
+ice_distribution.F90 I
+ice_kinds_mod.F90 I
+ice_ocean.F90 I
+ice_spacecurve.F90 I
+ice_orbital.F90 I
+ice_work.F90 I
+
+ice_blocks.F90 C
+ice_diagnostics.F90 C
+ice_domain.F90 C
+ice_itd.F90 C
+ice_mechred.F90 C
+ice_restoring.F90 C 
+ice_therm_vertical.F90 C
+ice_state.F90 C
+ice_transport_driver.F90 C
+ice_meltpond.F90 C
+
+ice_lvl.F90 N
+
+ice_calendar.F90 A, M
+ice_domain_size.F90 A, M
+ice_fileunits.F90 A, M 
+ice_flux.F90 A, M
+ice_forcing.F90 A
+ice_grid.F90 A, M
+ice_init.F90 A, M
+ice_read_write.F90 A, M
+ice_restart.F90 A, M
+ice_therm_itd.F90 A, M
+ice_transport_remap.F90 A, M
+ice_shortwave.F90 A, M
+ice_step_mod.F90 A, M
+ice_history.F90 A, M
+
+MODIFIED FROM AusCOM:
+ice_dyn_evp.F90 A
+
+NOTES:
+- in ice_shortwave shortwave_ccsm3 as in AusCOM, but it is
+not used in ACCESS anyway because albedos are computed in UM
+

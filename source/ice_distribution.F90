@@ -199,8 +199,8 @@
 !
 !-----------------------------------------------------------------------
 
-!   dbug = .true.
-   dbug = .false.
+   dbug = .true.
+!   dbug = .false.
    if (bcount > 0) then
       do n=1,size(distribution%blockLocation)
          if (distribution%blockLocation(n) == my_task+1) then

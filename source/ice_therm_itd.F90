@@ -430,15 +430,13 @@
          work(ij) = hin_max(1)
       enddo
 
-      if (iflag > 0) then
-          call fit_line(nx_block,       ny_block,          &
-                        iflag,          icells,            &
-                        indxii,         indxjj,    indxij, &
-                        aicen(:,:,1),   hicen_init(:,1),   &
-                        hbnew(:,0),   work     (:),        &
-                        g0   (:,1),   g1        (:,1),     &
-                        hL   (:,1),   hR        (:,1))
-      endif
+      call fit_line(nx_block,       ny_block,          &
+                    iflag,          icells,            &
+                    indxii,         indxjj,    indxij, &
+                    aicen(:,:,1),   hicen_init(:,1),   &
+                    hbnew(:,0),   work     (:),        &
+                    g0   (:,1),   g1        (:,1),     &
+                    hL   (:,1),   hR        (:,1))
 
       !-----------------------------------------------------------------
       ! Find area lost due to melting of thin (category 1) ice
@@ -493,18 +491,16 @@
       ! Compute g(h) for each ice thickness category.
       !-----------------------------------------------------------------
 
-      if (iflag > 0) then
-          do n = 1, ncat
-             call fit_line(nx_block,       ny_block,          &
-                           iflag,          icells,            &
-                           indxii,         indxjj,    indxij, &
-                           aicen(:,:,n),   hicen(:,n),        &
-                           hbnew(:,n-1), hbnew(:,n),          &
-                           g0   (:,n),   g1   (:,n),          &
-                           hL   (:,n),   hR   (:,n))
+      do n = 1, ncat
+         call fit_line(nx_block,       ny_block,          &
+                       iflag,          icells,            &
+                       indxii,         indxjj,    indxij, &
+                       aicen(:,:,n),   hicen(:,n),        &
+                       hbnew(:,n-1), hbnew(:,n),          &
+                       g0   (:,n),   g1   (:,n),          &
+                       hL   (:,n),   hR   (:,n))
 
-          enddo
-      endif
+      enddo
 
       !-----------------------------------------------------------------
       ! Compute area and volume to be shifted across each boundary.

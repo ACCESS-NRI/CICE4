@@ -43,7 +43,7 @@
 /
 
 &domain_nml
-    nprocs = 4
+    nprocs = 1
   , processor_shape   = 'slenderX2'
   , distribution_type = 'cartesian'
   , distribution_wght = 'latitude'
@@ -86,7 +86,7 @@
   , ycycle          = 1
   , atm_data_format = 'bin'
   , atm_data_type   = 'ncar'
-  , atm_data_dir    = '/usr/projects/climate/eclare/DATA/atm/gx3v2m/NCAR_bulk/'
+  , atm_data_dir    = '/home/petteri/tiede/AusCOM/cice/data/atm/gx3v2m/NCAR_bulk/'
   , calc_strair     = .true.
   , calc_Tsfc       = .true.
   , precip_units    = 'mm_per_month'
@@ -94,10 +94,10 @@
   , ustar_min       = 0.05
   , update_ocn_f    = .false.
   , oceanmixed_ice  = .true.
-  , ocn_data_format = 'bin'
+  , ocn_data_format = 'nc'
   , sss_data_type   = 'default'
   , sst_data_type   = 'default'
-  , ocn_data_dir    = 'unknown_ocn_data_dir'
+  , ocn_data_dir    = '/home/petteri/tiede/AusCOM/cice/data/ocn/'
   , oceanmixed_file = 'unknown_oceanmixed_file'
   , restore_sst     = .false.
   , trestore        =  180

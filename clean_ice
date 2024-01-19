@@ -1,10 +1,10 @@
 #! /bin/csh -f
 
 #Change to your own paths!
-setenv SYSTEM_USERDIR /scratch2/eclare/CICE.v4.0
+setenv SYSTEM_USERDIR /short/p66/${USER}/CICE4.1   # vayu
 
 #setenv SRCDIR $HOME/cice.v4.0/cice
-setenv SRCDIR /usr/projects/climate/eclare/CICE.v4.0/cice
+setenv SRCDIR $HOME/AusCOM/AusCOM1.0/submodels/cice4.1
 
 setenv CBLD   $SRCDIR/bld
 setenv EXEDIR $SYSTEM_USERDIR/rundir4

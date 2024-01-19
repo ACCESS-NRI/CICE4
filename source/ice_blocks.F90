@@ -355,6 +355,8 @@ contains
          all_blocks(n)%block_id, &
          all_blocks(n)%iblock,   & 
          all_blocks(n)%jblock
+         write(nu_diag,*) 'block id, i_glob, j_glob:', &
+         all_blocks(n)%i_glob, all_blocks(n)%j_glob
       enddo
       endif
    endif

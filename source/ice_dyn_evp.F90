@@ -909,8 +909,8 @@
          ! for ocean stress
 #if defined(AusCOM) || defined(ACCICE)
          ! direction of rotation depends on the hemisphere
-         waterx(i,j) = uocn(i,j)*cosw - vocn(i,j)*sinw*sign(1.,real(fm(i,j)))
-         watery(i,j) = vocn(i,j)*cosw + uocn(i,j)*sinw*sign(1.,real(fm(i,j)))
+         waterx(i,j) = uocn(i,j)*cosw - vocn(i,j)*sinw*sign(1.,fm(i,j))
+         watery(i,j) = vocn(i,j)*cosw + uocn(i,j)*sinw*sign(1.,fm(i,j))
 #else
          waterx(i,j) = uocn(i,j)*cosw - vocn(i,j)*sinw
          watery(i,j) = vocn(i,j)*cosw + uocn(i,j)*sinw

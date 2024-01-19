@@ -688,7 +688,6 @@
                                       ! (m/s/deg^(-m2))
          m2 = 1.36_dbl_kind           ! constant from Maykut & Perovich
                                       ! (unitless)
-
 #if defined(AusCOM) || defined(ACCICE)
       cpchr = -cp_ocn*rhow*chio
 #endif
@@ -3753,7 +3752,6 @@
       !-----------------------------------------------------------------
       ! Initialize
       !-----------------------------------------------------------------
-
 #if defined(ACCICE)
       qbotmax = -p5*rhoi*Lfresh  ! max enthalpy of ice growing at bottom
 #endif
