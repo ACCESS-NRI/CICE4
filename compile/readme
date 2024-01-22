@@ -1,0 +1,17 @@
+2016/01/11:
+
+After PBS upgrade on Raijin, ACCESS 1.4 coupled run done by Tilo hung up after finished 3 months.
+tried to re-compile 3 submodles with comp_access-cm_cice.360-185 using openmpi/1.8.5, but UM always crashed at 2nd time step.
+
+
+
+re-compiled cice4 for Tilo's ACCESS1.4 coupled run with comp_access-cm_cice.RJ.nP-mct 12, which is using openmpi/1.6.5, because cice hung up in coupled run after PBS upgrade on Raijin.
+then no more hanging.
+
+2017/12/25:
+use these two files
+-rwxr-x---  1 ars599 p66  285 May 16  2016 environs.raijin.nci.org.au*
+-rwxr-x---  1 ars599 p66 7385 May 16  2016 comp_access-cm_cice.RJ.nP-mct*
+
+comp_access-cm_cice.RJ.nP-mct 12
+
