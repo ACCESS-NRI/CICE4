@@ -1,0 +1,30 @@
+ 1110  ls ../ESM1.5/
+ 1111  ls
+ 1112  less readme 
+ 1113  ls -la
+ 1114  git clone https://github.com/ACCESS-NRI/cice4
+ 1115  ls
+ 1116  git clone https://github.com/ACCESS-NRI/cice5
+ 1117  cd cice4/
+ 1118  ls
+ 1119  git branch -a 
+ 1120  git checkout 
+ 1121  git checkout origin/access-esm1.5
+ 1122  git checkout origin/access-esm1.5 -b my-esm1.5
+ 1123  ls -la
+ 1124  pwd
+ 1125  git status
+ 1126  touch test.txt
+ 1127  git status
+ 1128  git remote -v 
+ 1129  rm test.txt 
+ 1130  vi README_v4.1 
+ 1131  git status
+ 1132  git add README_v4.1
+ 1133  git status
+ 1134  git commit -m "This is my 1st commit try"
+ 1135  git log
+ 1136  git push -u origin my-esm1.5
+ 1137  git help commit
+ 1138  git push -u origin my-esm1.5
+ 1139  history > remember.this
