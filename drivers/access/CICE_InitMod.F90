@@ -66,9 +66,7 @@
       private
       save
 
-#ifdef AusCOM
       integer :: nrec
-#endif
 
 ! !PUBLIC MEMBER FUNCTIONS:
 
@@ -192,6 +190,20 @@
       if (tr_pond) call init_meltponds  ! melt ponds
 
       call init_diags           ! initialize diagnostic output points
+      !-------------------------------------------------------------------------------------
+      !202408: read in diagonastic variable for tendency calculation (at the 1st time step) 
+      !        which is somehow not properly initialised in the model code.
+      !xxxxxxxxxxxxxxx testing xxxxxxxxxxxxxxxxxxxxxxxxxxx 
+      !write(il_out,*)'CICE_Init: test calling get_restart_mice ...... '
+      !call get_restart_mice(trim(restartdir)//'/mice.nc')
+      !xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      !!!!write(il_out,*)'CICE_Init: now calling get_diag_restart ...... '
+      !call get_diag_restart(trim(restartdir)//'/mice.nc')
+      !!!!call get_diag_restart(trim(restartdir)//'/mdiag_restart.nc')
+      !!!!write(il_out,*)'CICE_Init: get_diag_restart called!  '
+      !The above call must be done before the following 2 calls to initialise diagnostic 
+      !variables including, daidtt, daidtd, dvidtt... etc. 
+      !--------------------------------------------------------------------------------------
       call init_history_therm   ! initialize thermo history variables
       call init_history_dyn     ! initialize dynamic history variables
 
@@ -232,12 +244,10 @@
       call init_flux_ocn        ! initialize ocean fluxes sent to coupler
 !#endif
 
-!dhb599 20111128: this call is moved here from 'downstair', because it *re-initilaise*
-!     the o2i fileds read in from o2i.nc (e.g., sst=>-1.84 sss=>34.) !!!  
       call ice_write_hist(dt)   ! write initial conditions if write_ic = T
 
 #ifdef AusCOM
-      write(il_out,*)' calling init_mocn_fields_4_i2a at time_sec = ',0
+      write(il_out,*)' calling init_mocn_fields_4_i2a ...... '
       !call initialize_mice_fields_4_i2a
       call initialize_mocn_fields_4_i2a
 
@@ -245,7 +255,6 @@
       ! variables ('mice')saved at the end of last run from ice models; 
       ! for initial run, pre-processed o2i (and maybe mice) fields are required.
       write(il_out,*)' calling get_restart_o2i at time_sec = ',0
-!      call get_restart_o2i('o2i.nc')
       call get_restart_o2i(trim(restartdir)//'/o2i.nc')
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -255,34 +264,47 @@
 !      call put_restart_i2a('i2a.nc', 0)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!      if ( file_exist('CICE_restart/mice.nc') ) then
+!-----------------------------------------------------------------------------------------------------
       if ( file_exist(trim(restartdir)//'/mice.nc') ) then
         !for continue runs, mice data MUST be available.
-!        call get_restart_mice('CICE_restart/mice.nc')
         call get_restart_mice(trim(restartdir)//'/mice.nc')
       else
-write(6,*)'*** CICE WARNING: No initial mice.nc data available here! **'
-write(6,*)'*** CICE WARNING: ALL mice variables will be set to ZERO! **'
-write(6,*)'*** CICE WARNING: This is allowed for the init run ONLY ! **' 
+        write(6,*)'*** CICE WARNING: No initial mice.nc data available here! **'
+        write(6,*)'*** CICE WARNING: ALL mice variables will be set to ZERO! **'
+        write(6,*)'*** CICE WARNING: This is allowed for the init run ONLY ! **' 
       endif
       if (use_core_runoff) then
-!         call get_core_runoff('CICE_input/core_runoff_regrid.nc',&
-         call get_core_runoff(trim(inputdir)//'/core_runoff_regrid.nc',&
-                              'runoff',1)
+         call get_core_runoff(trim(inputdir)//'/core_runoff_regrid.nc', 'runoff',1)
       endif
 
-        write(il_out,*)' calling ave_ocn_fields_4_i2a at time_sec = ',0 !time_sec
-        call time_average_ocn_fields_4_i2a  !accumulate/average ocn fields needed for IA coupling
+      write(il_out,*)'CICE_init: calling ave_ocn_fields_4_i2a at time_sec = ',0 !time_sec
+      call time_average_ocn_fields_4_i2a  
+      !accumulate/average ocn fields needed for IA coupling
+      write(il_out,*)'CICE_Init: ave_ocn_fields_4_i2a called ----'
 
-      !get a2i fields and then set up initial SBC for ice
-      !call from_atm(0)
-      !call get_sbc_ice
-      !now "most of" the IC of this run are 'proper' for "call ice_write_hist"
 #endif
 
-!dhb599: 20111128: the following call is moved 'upstair':-----------------------
-!      call ice_write_hist(dt)   ! write initial conditions if write_ic = T
-!-------------------------------------------------------------------------------
+!-----------------------------------------------------------------------
+      !202407: read in land ice discharge into ocean off Antarctica and Greenland.
+      !!! options for land ice discharged as iceberg melting around AA and Gnld
+      !   1: use AC2 data but GC3.1 iceberg climatological pattern, each month takes the
+      !          total discharge as that diagnosed in u-ar676 (yrs2-101);
+      !   2: use GC3 iceberg climatological pattern, each month enhanced by ac2/gc3 annual ratio
+      !          of land ice discharge to make sure the annual total discharge is same as case 1;
+      !   3: as case 1 but use annual mean
+      !   4: as case 2 but use annual mean
+      !!! Note: 3 and 4 are similar but NOT the same; 
+      !!! 1-4 cases should have idential annual discharge of land ice (as iceberg) into ocean.
+      write(il_out,*)'CICE_Init: To call get_lice_discharge at time_sec = ',0
+      !if ( file_exist(trim(inputdir)//'/lice_discharge_masks_iceberg.nc') ) then
+      if ( file_exist(trim(inputdir)//'/lice_discharge_iceberg.nc') ) then
+          write(il_out,*)'CICE_Init: now calling get_lice_discharge at time_sec = ',0    
+          call get_lice_discharge(trim(inputdir)//'/lice_discharge_iceberg.nc')
+          write(il_out,*)'CICE_Init: get_lice_discharge called!  '
+      else
+          call abort_ice ('ice: land ice discharge (iceberg flux) datafile missing!')
+      endif
+      write(il_out,*)'CICE_Init: get_lice_discharge called!  '
 
       end subroutine cice_init
 

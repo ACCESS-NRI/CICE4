@@ -505,6 +505,13 @@
          do i = 1, nx_block
             daidtt(i,j,iblk) = (aice(i,j,iblk) - daidtt(i,j,iblk)) / dt
             dvidtt(i,j,iblk) = (vice(i,j,iblk) - dvidtt(i,j,iblk)) / dt
+            !202408:-----------------------------------------------------------------------
+            dvsdtt(i,j,iblk) = (vsno(i,j,iblk) - dvsdtt(i,j,iblk)) / dt
+            if (tr_iage) then
+               if (trcr(i,j,nt_iage,iblk) > c0) &
+                  dagedtt(i,j,iblk)= (trcr(i,j,nt_iage,iblk)-dagedtt(i,j,iblk)-dt)/dt
+            endif
+            !------------------------------------------------------------------------------
          enddo
          enddo
 
@@ -735,6 +742,10 @@
          do i = ilo,ihi
             dvidtd(i,j,iblk) = (vice(i,j,iblk) - dvidtd(i,j,iblk)) /dt
             daidtd(i,j,iblk) = (aice(i,j,iblk) - daidtd(i,j,iblk)) /dt
+            !202408:
+            dvsdtd(i,j,iblk) = (vice(i,j,iblk) - dvidtd(i,j,iblk)) /dt
+            if (tr_iage) &
+               dagedtd(i,j,iblk)= (trcr(i,j,nt_iage,iblk)-dagedtd(i,j,iblk))/dt
          enddo
          enddo
 

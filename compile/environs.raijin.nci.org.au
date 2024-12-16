@@ -2,9 +2,26 @@
    #source /opt/Modules/3.2.6/init/csh
    source /etc/profile.d/nf_csh_modules
    module purge
-   module load intel-fc/17.0.1.132
-   module load intel-cc/17.0.1.132
-   module load intel-mkl/17.0.1.132
-   module load openmpi/1.10.2
+#   module load intel-fc/12.1.9.293
+#   module load intel-cc/12.1.9.293
+#   module load intel-mkl/12.1.9.293
+#   module load openmpi/1.6.5
+#
+#   module load netcdf/4.2.1.1
 
-   module load netcdf/4.2.1.1
+module load openmpi/4.0.2
+module load intel-compiler/2019.3.199
+module load netcdf/4.7.1
+
+#module load openmpi/3.1.3
+#module load intel-fc/2019.3.199
+#module load intel-cc/2019.3.199
+#module load netcdf/4.2.1.1
+
+# OASIS
+PBD_OASIS_DIR=/g/data/p66/pbd562/test/t47-hxw/jan20/4.0.2/oasis3-mct
+export FPATH=${PBD_OASIS_DIR}/Linux/build/lib/psmile.MPI1/:${PBD_OASIS_DIR}/Linux/build/lib/mctdir/mct:${PBD_OASIS_DIR}/Linux/build/lib/scrip:$FPATH
+export LIBRARY_PATH=${PBD_OASIS_DIR}/Linux/lib:$LIBRARY_PATH
+export LD_LIBRARY_PATH=${PBD_OASIS_DIR}/Linux/lib:$LD_LIBRARY_PATH
+export RPATH=${PBD_OASIS_DIR}/Linux/lib:$RPATH
+export LD_RUN_PATH=${PBD_OASIS_DIR}/Linux/lib:$LD_RUN_PATH

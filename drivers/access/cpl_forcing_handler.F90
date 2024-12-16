@@ -21,6 +21,9 @@ use ice_grid,      only : tmask, to_ugrid
 use ice_communicate, only : my_task, master_task
 use ice_ocean,     only : cprho
 use ice_exit,      only : abort_ice
+!202407:
+use ice_grid, only: tarea
+use ice_calendar, only: month
 
 use cpl_parameters
 use cpl_netcdf_setup
@@ -323,7 +326,7 @@ if ( file_exist(fname) ) then
     write(il_out,*) '(get_restart_o2i) has read in 7 o2i fields.'
   endif
 else
-  if (my_task==0) then
+  if (my_task==master_task) then
     write(il_out,*) 'ERROR: (get_restart_o2i) not found file *** ',fname
   endif
   print *, 'CICE: (get_restart_o2i) not found file *** ',fname
@@ -361,21 +364,316 @@ if ( file_exist(fname) ) then
   call ice_read_nc(ncid_o2i, 1, 'mfhocn',    mfhocn,    dbug)
   call ice_read_nc(ncid_o2i, 1, 'mfswthru',  mfswthru,  dbug)
   call ice_read_nc(ncid_o2i, 1, 'msicemass', msicemass, dbug)
-
+  !202407: 2 more added: (not needed when iceberg flux is read in)
+  !call ice_read_nc(ncid_o2i, 1, 'lice_sth',  lice_sth,  dbug)
+  !call ice_read_nc(ncid_o2i, 1, 'lice_nth',  lice_nth,  dbug)
+  
   if (my_task == master_task) then
     call ice_close_nc(ncid_o2i)
     write(il_out,*) '(get_restart_mice) has read in 8 T-M variables.'
   endif
 else
-  if (my_task==0) then
+!  if (my_task==master_task) then
     write(il_out,*) 'ERROR: (get_restart_mice) not found file *** ',fname
-  endif
-  print *, 'CICE: (get_restart_mice) not found file *** ',fname
+!  endif
   call abort_ice('CICE stopped -- Need time0 mice data file.')
 endif
 
 return
 end subroutine get_restart_mice
+
+#ifdef MYTEST_tendency
+
+!===============================================================================
+subroutine get_diag_restart(fname)
+
+! to be called at beginning of the run before hist_init to get 'last' diagnostic
+! variables which are to be used for tendency calculation at the first timestep.
+
+implicit none
+
+character*(*), intent(in) :: fname
+
+integer(kind=int_kind) :: mncid
+logical :: dbug
+
+dbug = .true.
+
+if ( file_exist(fname) ) then
+
+  !if (my_task == master_task) then
+    write(il_out,*) '(get_diag_restart) opening ', fname
+  !endif
+  call ice_open_nc(fname, mncid)
+  write(il_out,*) '(get_diag_restart) reading var1: mdaidtt ...... '
+  call ice_read_nc(mncid, 1, 'mdaidtt', mdaidtt, dbug)
+  write(il_out,*) '(get_diag_restart) reading var2: mdaidtd ...... '
+  call ice_read_nc(mncid, 1, 'mdaidtd', mdaidtd, dbug)
+  write(il_out,*) '(get_diag_restart) reading var3: mdvidtt ...... '
+  call ice_read_nc(mncid, 1, 'mdvidtt', mdvidtt, dbug)
+  write(il_out,*) '(get_diag_restart) reading var4: mdvidtd ...... '
+  call ice_read_nc(mncid, 1, 'mdvidtd', mdvidtd, dbug)
+  write(il_out,*) '(get_diag_restart) reading var5: mdvsdtt ...... '
+  call ice_read_nc(mncid, 1, 'mdvsdtt', mdvsdtt, dbug)
+  write(il_out,*) '(get_diag_restart) reading var6: mdvsdtd ...... '
+  call ice_read_nc(mncid, 1, 'mdvsdtd', mdvsdtd, dbug)
+  !if (tr_iage) then
+  !  call ice_read_nc(ncid, 1, 'mdagedtt', mdagedtt, dbug)
+  !  call ice_read_nc(ncid, 1, 'mdagedtd', mdagedtd, dbug)
+  !endif
+!
+!may add more diagnostic variables as needed here
+!call ice_read_nc(ncid, 1, 'xxxxx', xxxxx,  dbug)
+!
+  if (my_task == master_task) then
+    call ice_close_nc(mncid)
+    write(il_out,*) '(get_diag_restart) has read all variables!'
+  endif
+
+else
+
+  write(il_out,*) '(get_diag_restart) WARNING -- file NOT found: ', fname
+  write(il_out,*) '(get_diag_restart) WARNING -- no mdiag_restart data read in! '
+
+endif
+
+return
+
+end subroutine get_diag_restart
+
+#endif
+
+!--------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx---------------------------
+subroutine save_diag_restart00(fname, nstep)
+! to be called after hist_write to save 'last' diagnostic (some 'defined') variables
+! which are used for tendency calculation at 1st timestep of next run .
+
+implicit none
+
+character*(*), intent(in) :: fname
+integer(kind=int_kind), intent(in) :: nstep
+integer(kind=int_kind) :: ncid
+integer(kind=int_kind) :: ll, ilout
+
+!!if (my_task == 0) then
+!!  call create_ncfile(fname, ncid, nx_global, ny_global, ll=1, ilout=il_out)
+!!  call write_nc_1Dtime(real(nstep), 1, 'time', ncid)
+!!endif
+
+!!vwork = aice
+!!call gather_global(gwork, vwork, master_task, distrb_info)
+!!if (my_task == 0) call write_nc2D(ncid, 'aice', gwork, 2, nx_global, ny_global, 1, ilout=il_out)
+!!vwork = vice
+!!call gather_global(gwork, vwork, master_task, distrb_info)
+!!if (my_task == 0) call write_nc2D(ncid, 'vice', gwork, 2, nx_global, ny_global, 1, ilout=il_out)
+!!vwork = vsno
+!!call gather_global(gwork, vwork, master_task, distrb_info)
+!!if (my_task == 0) call write_nc2D(ncid, 'vsno', gwork, 2, nx_global, ny_global, 1, ilout=il_out)
+!!if (my_task == 0) call ncheck( nf_close(ncid) )
+
+end subroutine save_diag_restart00
+!------------------------------------------------------------------------------------------------
+
+#ifdef MYTEST_tendency
+
+subroutine save_diag_restart(fname, nstep)
+! to be called after hist_write to save 'last' diagnostic (some 'defined') variables
+! which are used for tendency calculation at 1st timestep of next run .
+
+implicit none
+
+character*(*), intent(in) :: fname
+integer(kind=int_kind), intent(in) :: nstep
+integer(kind=int_kind) :: ncid
+integer(kind=int_kind) :: ll, ilout
+
+if (my_task == 0) then
+  call create_ncfile(fname, ncid, nx_global, ny_global, ll=1, ilout=il_out)
+  call write_nc_1Dtime(real(nstep), 1, 'time', ncid)
+endif
+
+vwork = mdaidtt
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'mdaidtt', gwork, 2, nx_global, ny_global, 1, ilout=il_out)
+vwork = mdaidtd
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'mdaidtd', gwork, 2, nx_global, ny_global, 1, ilout=il_out)
+vwork = mdvidtt
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'mdvidtt', gwork, 2, nx_global, ny_global, 1, ilout=il_out)
+vwork = mdvidtd
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'mdvidtd', gwork, 2, nx_global, ny_global, 1, ilout=il_out)
+vwork = mdvsdtt
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'mdvsdtt', gwork, 2, nx_global, ny_global, 1, ilout=il_out)
+vwork = mdvsdtd
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'mdvsdtd', gwork, 2, nx_global, ny_global, 1, ilout=il_out)
+!if (tr_iage) then
+!  vwork = mdagedtt
+!  call gather_global(gwork, vwork, master_task, distrb_info)
+!  if (my_task == 0) call write_nc2D(ncid, 'mdagedtt', gwork, 2, nx_global, ny_global, 1, ilout=il_out)
+!  vwork = mdagedtd
+!  call gather_global(gwork, vwork, master_task, distrb_info)
+!  if (my_task == 0) call write_nc2D(ncid, 'mdagedtd', gwork, 2, nx_global, ny_global, 1, ilout=il_out)
+!endif
+!
+!vwork = xxxxx
+!call gather_global(gwork, vwork, master_task, distrb_info)
+!if (my_task == 0) call write_nc2D(ncid, 'xxxxx', gwork, 2, nx_global, ny_global, 1, ilout=il_out)
+!
+
+if (my_task == 0) call ncheck( nf_close(ncid) )
+
+deallocate (mdaidtt, mdaidtd, mdvidtt, mdvidtd, mdvsdtt, mdvsdtd) !, mdagedtt, mdagedtd)
+
+end subroutine save_diag_restart
+
+#endif
+
+!=================================================
+subroutine get_lice_discharge(fname)
+
+! Called at beginning of each run trunk to read in land ice discharge as iceberg flux
+! (off Antarctica and Greenland).
+
+implicit none
+
+character(len=*), intent(in) :: fname
+character*80 :: myvar = 'ficeberg'
+integer(kind=int_kind) :: ncid_i2o, im, k, i, j
+logical :: dbug = .true. 
+
+call ice_open_nc(trim(fname), ncid_i2o)
+
+write(il_out,*) '(get_lice_discharge) opened datafile: ', trim(fname)
+write(il_out,*) '(get_lice_discharge) ncid_i2o= ', ncid_i2o
+
+if (iceberg == 0 .or. iceberg .gt. 4) then
+  write(il_out,*) '(get_lice_discharge) in ESM onl support iceberg = 1,2,3,4)! '
+  call abort_ice('CICE stopped: ESM does not support iceberg = 0! Please set it to 1/2/3/4')
+else
+  call gather_global(gtarea, tarea, master_task, distrb_info)
+  select case (iceberg)
+    case (1); myvar = 'FICEBERG_AC2'
+    case (2); myvar = 'FICEBERG_GC3'
+    case (3); myvar = 'FICEBERG_AC2_AVE'
+    case (4); myvar = 'FICEBERG_GC3_AVE'
+  end select
+  write(il_out,*)'(get_lice_discharge), iceberg = ', iceberg
+  write(il_out,'(a,a)') '(get_lice_discharge) reading in iceberg data, myvar= ',trim(myvar)
+
+  do im = 1, 12
+    write(il_out,*) '(get_lice_discharge) reading in data, month= ',im
+    call ice_read_nc(ncid_i2o, im, trim(myvar), vwork, dbug)
+
+    icebergfw(:,:,im,:) = vwork(:,:,:)
+
+    call gather_global(gwork, vwork, master_task, distrb_info)
+
+    gicebergfw(:,:,im) = gwork(:,:)
+
+    ticeberg_s(im) = 0.0
+    do j = 1, iceberg_je_s  !1, ny_global/2 (iceberg_je_s smaller than ny_global/2 thus saves time)
+      do i = 1, nx_global
+        ticeberg_s(im) = ticeberg_s(im) + gtarea(i,j) * gwork(i,j)
+      enddo
+    enddo
+    ticeberg_n(im) = 0.0
+    do j = iceberg_js_n, ny_global  !ny_global/2 + 1, ny_global !(iceberg_js_n bigger than ny_global/2 +1)
+      do i = 1, nx_global
+        ticeberg_n(im) = ticeberg_n(im) + gtarea(i,j) * gwork(i,j)
+      enddo
+    enddo
+
+    write(il_out, *) '(get_lice_discharge) check: im, ticeberg_s, ticeberg_n = ',im, ticeberg_s(im), ticeberg_n(im) 
+
+    !call scatter_global(vwork, gwork, master_task, distrb_info, &
+    !                              field_loc_center, field_type_scalar)
+    !icebergfw(:,:,im,:) = vwork(:,:,:)        
+  enddo
+
+  write(il_out,*) '(get_lice_discharge) reading in gwet...'
+  call ice_read_nc(ncid_i2o, 1, 'GWET', vwork, dbug)
+  call gather_global(gwet, vwork, master_task, distrb_info)
+
+  !call check_iceberg_reading('chk_iceberg_readin.nc')
+  !!!above call results in segmentation fault !?!!!
+
+endif
+
+if (my_task == master_task) call ice_close_nc(ncid_i2o)
+write(il_out,*) '(get_lice_dischargeg) reading completed!'
+
+return
+
+end subroutine get_lice_discharge
+
+!=================================================
+subroutine get_iceberg_distribution(fname) !, mychoice)
+
+! This routine is called at beginning of each job.
+! *** It's NOT used! 'get_lice_dischargee ' is used instead. ***   
+
+implicit none
+
+character*(*), intent(in) :: fname
+!integer(kind=int_kind), intent(in) :: mychoice  !iceberg distribution option (1,2,3,4)
+logical :: dbug
+integer(kind=int_kind) :: ncid, im
+
+dbug = .true.
+!dbug = .false.
+
+IF (file_exist(fname)) THEN
+
+if (my_task==0) then
+  write(*,*) '(get_iceberg_distribution) opening ncfile: ',fname
+  write(il_out,*) '(get_iceberg_distribution) opening ncfile: ',fname
+endif
+
+call ice_open_nc(trim(fname), ncid)
+if (my_task==0) then
+  write(*,*) '(get_iceberg_distribution) reading in iceberg data, option: ',iceberg !mychoice
+  write(il_out,'(a,a)') '(get_iceberg_distribution) reading in iceberg data, option: ',iceberg !mychoice
+endif
+!!if (mychoice == 1) then
+if (iceberg == 1) then
+  do im = 1, 12
+    call ice_read_nc(ncid, im, 'FICEBERG_AC2', icebergfw(:,:,im,:), dbug)
+  enddo
+!!else if (mychoice == 2) then
+else if (iceberg == 2) then
+  do im = 1, 12
+    call ice_read_nc(ncid, im, 'FICEBERG_GC3', icebergfw(:,:,im,:), dbug)
+  enddo
+!!else if (mychoice == 3) then
+else if (iceberg == 3) then
+  do im = 1, 12
+    !set monthly to be annual mean:
+    call ice_read_nc(ncid, 1, 'FICEBERG_AC2_AVE', icebergfw(:,:,im,:), dbug)
+  enddo
+else if (iceberg == 4) then
+  do im = 1, 12
+    !set monthly to be annual mean:
+    call ice_read_nc(ncid, 1, 'FICEBERG_GC3_AVE', icebergfw(:,:,im,:), dbug)
+  enddo
+endif
+
+if (my_task == master_task) call ice_close_nc(ncid)
+
+ELSE
+
+write(6,'(a,a)')'CICE stopped -- iceberg data missing ----> ', fname
+write(il_out,'(a,a)')'CICE stopped -- iceberg data missing ----> ', fname
+call abort_ice ('ice: iceberg data missing!')
+
+ENDIF
+
+return
+end subroutine get_iceberg_distribution
+
 
 !===============================================================================
 subroutine get_restart_i2o(fname)
@@ -415,6 +713,9 @@ if ( file_exist(fname) ) then
     case ('form_io');  io_form  = vwork
     case ('co2_i1');  io_co2  = vwork
     case ('wnd_i1');  io_wnd  = vwork
+    !202407: 2 more added
+    case ('lice_fw');  io_licefw = vwork
+    case ('lice_ht');  io_liceht = vwork
     end select
   enddo
   if (my_task == master_task) then
@@ -433,7 +734,10 @@ return
 end subroutine get_restart_i2o
 
 !===============================================================================
-subroutine set_sbc_ice
+subroutine set_sbc_ice    
+!-------------------------      
+!This routine is NOT used!
+!-------------------------
 !
 ! Set coupling fields (in units of GMB, from UM and MOM4) needed for CICE
 !
@@ -783,6 +1087,13 @@ if (my_task == 0) call write_nc2D(ncid, 'mfswthru', gwork, 2, il_im, il_jm, 1, i
 vwork = msicemass
 call gather_global(gwork, vwork, master_task, distrb_info)
 if (my_task == 0) call write_nc2D(ncid, 'msicemass', gwork, 2, il_im, il_jm, 1, ilout=il_out)
+!202407: 2 more added (no need when iceberg flux is read in, especially for ESM case)
+!vwork = um_icenth
+!call gather_global(gwork, vwork, master_task, distrb_info)
+!if (my_task == 0) call write_nc2D(ncid, 'lice_nth', gwork, 2, il_im, il_jm, 1, ilout=il_out)
+!vwork = um_icesth
+!call gather_global(gwork, vwork, master_task, distrb_info)
+!if (my_task == 0) call write_nc2D(ncid, 'lice_sth', gwork, 2, il_im, il_jm, 1, ilout=il_out)
 
 if (my_task == 0) call ncheck( nf_close(ncid) )
 
@@ -828,6 +1139,20 @@ subroutine get_i2o_fields
 implicit none
 
 real (kind=dbl_kind), dimension(nx_block,ny_block,max_blocks) :: pice
+integer :: i, j
+
+real (kind=dbl_kind) :: &
+        trunoff_s  = 0.0, &
+        trunoff_n  = 0.0, &
+        r_s = 1.0, &
+        r_n = 1.0, &
+        r_runoff=1.0        !=(1-min(r_max_iceberg. r_s(or r_n))
+!temporary use (for checking if algorithm conserves water mass): 
+real (kind=dbl_kind) :: &
+        newtrunoff_s  = 0.0, &
+        newtrunoff_n  = 0.0, &
+        newiceberg_s  = 0.0, &
+        newiceberg_n  = 0.0
 
 ! Fields obtained here are all at T cell center. before being sent to MOM4, vector 
 ! (Taux, Tauy) should be shifted on to U point as required
@@ -842,11 +1167,9 @@ io_strsu = um_taux * (1. - maice) - mstrocnxT * maice
 io_strsv = um_tauy * (1. - maice) - mstrocnyT * maice
 
 !(3) freshwater flux to ocean: rainfall (+ ice melting water flux ?)
-io_rain = um_rain * (1. - maice)
-!!CH: confirmed:
-!!if (ice_fwflux) io_rain = io_rain + mfresh	!always .t.
-!!NOTE mfresh is now splitted into melt (14) and form (15) and passed into ocn seperately.
-
+io_rain = um_rain * (1. - maice) 
+!202412: fixing watermass loss from ocean by adding a small, constant fwflux into rain--
+io_rain = io_rain + add_lprec
 !(4) freshwater flux to ocean: snowfall
 io_snow = um_snow * (1. - maice)
 
@@ -880,10 +1203,95 @@ io_shflx = um_shflx
 !io_lwflx = um_lwflx * (1. - maice)
 io_lwflx = um_lwflx
 
-!(11) runoff (!check the incoming field! pattern? remapping ok? conserved? ...) 
-io_runof = um_runoff 
-! CHECK with SM about the annual cycle of core-runoff! (we only have annual mean)
+!(11) runoff 
 
+io_runof = um_runoff
+
+call gather_global(grunoff, um_runoff, master_task, distrb_info)
+
+!*** mask off "extra/useless" runoff on dry points ***
+grunoff(:,:) = grunoff(:,:) * gwet(:,:)
+!
+
+trunoff_s = 0.0
+do j = 1, runoff_je_s
+  do i = 1, nx_global
+    trunoff_s = trunoff_s + gtarea(i,j) * grunoff(i,j)
+    !
+    grunoff(i,j) = grunoff(i,j) * (1.0 - iceberg_rate_s)  !do deduction 
+    !
+  enddo
+enddo
+trunoff_n = 0.0
+do j = runoff_js_n, runoff_je_n
+  do i = runoff_is_n, runoff_ie_n
+    trunoff_n = trunoff_n + gtarea(i,j) * grunoff(i,j)
+    !
+    grunoff(i,j) = grunoff(i,j) * (1.0 - iceberg_rate_n)  !do deduction
+    !
+  enddo
+enddo
+!Now global runoff has been "updated" (deduction done for iceberg) 
+!Get the resultant runoff and iceberg fluxes 
+
+call scatter_global(vwork, grunoff, master_task, distrb_info, &
+                                  field_loc_center, field_type_scalar)
+io_runof(:,:,:) = vwork(:,:,:)
+
+!2 new flux items associated with the iceberg discharged into ocean
+!(18) water flux due to land ice melt off Antarctica and Greenland (kg/m^2/s)
+!(19) heat  flux due to land ice melt off Antarctica and Greenland
+
+gwork(:,:) = 0.0
+do i = 1, nx_global
+  do j = 1, iceberg_je_s
+    gwork(i, j) = gicebergfw(i, j, month) * iceberg_rate_s * trunoff_s / ticeberg_s(month)
+  enddo
+  do j = iceberg_js_n, ny_global
+    gwork(i, j) = gicebergfw(i, j, month) * iceberg_rate_n * trunoff_n / ticeberg_n(month)
+  enddo
+enddo
+!Now global iceberg has been defined (using the deduction from runoff)
+
+call scatter_global(vwork, gwork, master_task, distrb_info, &
+                    field_loc_center, field_type_scalar)
+io_licefw(:,:,:) = vwork(:,:,:)   !i2o field No 18. 
+
+!Also count in the latent heat carried with the runoff part, as done below, thus allowing 
+!for (rough) consistency of energy exchange no matter what iceberg_rate_s/n are used.
+!Warning: the follow approach would lose all the runoff LH in no-iceberg case ***
+!    if we (have to) chose runoff_lh = .false. to avoid model crash(?).
+
+IF ( runoff_lh ) THEN
+
+do i = 1, nx_global
+  do j = 1, runoff_je_s
+    gwork(i,j) = gwork(i,j) + grunoff(i,j)
+  enddo
+enddo
+do i = runoff_is_n, runoff_ie_n
+  do j = runoff_js_n, runoff_je_n
+    gwork(i,j) = gwork(i,j) + grunoff(i,j)
+  enddo
+enddo
+      !If runoff with latent heat flux crashes the model in no-iceberg case
+ELSE  !due probably to too big LH(?), (hope not!!!)
+      !all the LH carried by runoff is applied to iceberg areas.
+do i = 1, nx_global
+  do j = 1, iceberg_je_s
+    gwork(i,j) = gwork(i,j)/max(iceberg_rate_s, 0.0001) !get the whole runoff LH onto iceberg
+  enddo
+  do j = iceberg_js_n, ny_global
+    gwork(i,j) = gwork(i,j)/max(iceberg_rate_n, 0.0001)
+  enddo
+enddo
+
+ENDIF
+
+call scatter_global(vwork, gwork, master_task, distrb_info, &
+                    field_loc_center, field_type_scalar)
+io_liceht = - vwork * Lfresh * iceberg_lh       !FW converted into LH flux (W/m^2).
+                                                !!i2o field No 19.
 !(12) pressure
 pice = gravit * msicemass
 !----------------------------------------------------------------------------
@@ -911,8 +1319,9 @@ io_aice = maice
 io_melt = max(0.0,mfresh(:,:,:)) 
 !(15) ice form fwflux
 io_form = min(0.0,mfresh(:,:,:))
-
+!(16) CO2
 io_co2 = um_co2
+!(17) 10m winnspeed
 io_wnd = um_wnd
 
 return
@@ -1213,8 +1622,13 @@ do jf = nsend_i2a + 1, jpfldout
       vwork = scale * io_co2
     case('wnd_i1')
       vwork = scale * io_wnd
+    !202407: 2 more fields added:
+    case('lice_fw')
+      vwork = scale * io_licefw
+    case('lice_ht')
+      vwork = scale * io_liceht
   end select
-
+  
   call gather_global(gwork, vwork, master_task, distrb_info)
 
   if (my_task == 0 ) then
@@ -1346,20 +1760,118 @@ if (my_task == 0) call ncheck(nf_close(ncid))
 return
 end subroutine check_sstsss
 
+!=================================================
+subroutine check_iceberg_fields(ncfilenm)
 
-!============================================================================
-function file_exist (file_name)
-!
-character(len=*), intent(in) :: file_name
-logical  file_exist
+!this is used to check land ice fields
 
-file_exist = .false.
-if (len_trim(file_name) == 0) return
-if (file_name(1:1) == ' ')    return
+implicit none
 
-inquire (file=trim(file_name), exist=file_exist)
+character*(*), intent(in) :: ncfilenm
+integer(kind=int_kind) :: ncid,currstep, ilout, ll
+data currstep/0/
+save currstep
 
-end function file_exist
+currstep=currstep+1
+
+if (my_task == 0 .and. .not. file_exist(ncfilenm) ) then
+  call create_ncfile(ncfilenm,ncid,il_im,il_jm,ll=1,ilout=il_out)
+endif
+
+if (my_task == 0) then
+  write(il_out,*) 'opening ncfile at nstep ', ncfilenm,  currstep
+  call ncheck( nf_open(ncfilenm, nf_write,ncid) )
+  call write_nc_1Dtime(real(currstep),currstep,'time',ncid)
+end if
+
+call gather_global(gwork, io_licefw, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'io_licefw', gwork, 1, il_im,il_jm,currstep,ilout=il_out)
+call gather_global(gwork, io_liceht, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'io_liceht', gwork, 1, il_im,il_jm,currstep,ilout=il_out)
+
+if (my_task == 0) call ncheck(nf_close(ncid))
+
+return
+
+end subroutine check_iceberg_fields
+
+!=================================================
+subroutine check_iceberg_reading(ncfilenm)
+
+!this is used to check land ice fields read in
+
+implicit none
+
+character*(*), intent(in) :: ncfilenm
+integer(kind=int_kind) :: ncid,currstep, ilout, ll
+data currstep/0/
+save currstep
+
+currstep=currstep+1
+
+if (my_task == 0 .and. .not. file_exist(ncfilenm) ) then
+  call create_ncfile(ncfilenm,ncid,il_im,il_jm,ll=1,ilout=il_out)
+endif
+
+if (my_task == 0) then
+  write(il_out,*) 'opening ncfile at nstep ', ncfilenm,  currstep
+  call ncheck( nf_open(ncfilenm, nf_write,ncid) )
+  call write_nc_1Dtime(real(currstep),currstep,'time',ncid)
+end if
+
+vwork(:,:,:) = icebergfw(:,:,1,:)
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'icebergfm01', gwork, 1, il_im,il_jm,currstep,ilout=il_out)
+
+vwork(:,:,:) = icebergfw(:,:,2,:)
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'icebergfm02', gwork, 1, il_im,il_jm,currstep,ilout=il_out)
+
+vwork(:,:,:) = icebergfw(:,:,3,:)
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'icebergfm03', gwork, 1, il_im,il_jm,currstep,ilout=il_out)
+
+vwork(:,:,:) = icebergfw(:,:,4,:)
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'icebergfm04', gwork, 1, il_im,il_jm,currstep,ilout=il_out)
+
+vwork(:,:,:) = icebergfw(:,:,5,:)
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'icebergfm05', gwork, 1, il_im,il_jm,currstep,ilout=il_out)
+
+vwork(:,:,:) = icebergfw(:,:,6,:)
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'icebergfm06', gwork, 1, il_im,il_jm,currstep,ilout=il_out)
+
+vwork(:,:,:) = icebergfw(:,:,7,:)
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'icebergfm07', gwork, 1, il_im,il_jm,currstep,ilout=il_out)
+
+vwork(:,:,:) = icebergfw(:,:,8,:)
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'icebergfm08', gwork, 1, il_im,il_jm,currstep,ilout=il_out)
+
+vwork(:,:,:) = icebergfw(:,:,9,:)
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'icebergfm09', gwork, 1, il_im,il_jm,currstep,ilout=il_out)
+
+vwork(:,:,:) = icebergfw(:,:,10,:)
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'icebergfm10', gwork, 1, il_im,il_jm,currstep,ilout=il_out)
+
+vwork(:,:,:) = icebergfw(:,:,11,:)
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'icebergfm11', gwork, 1, il_im,il_jm,currstep,ilout=il_out)
+
+vwork(:,:,:) = icebergfw(:,:,12,:)
+call gather_global(gwork, vwork, master_task, distrb_info)
+if (my_task == 0) call write_nc2D(ncid, 'icebergfm12', gwork, 1, il_im,il_jm,currstep,ilout=il_out)
+
+if (my_task == 0) call ncheck(nf_close(ncid))
+
+return
+
+end subroutine check_iceberg_reading
 
 !============================================================================
 

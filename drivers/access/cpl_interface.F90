@@ -60,8 +60,7 @@
   integer(kind=int_kind)      :: integer_byte_size, integer_io_size
   real(kind=dbl_kind), dimension(:,:), allocatable :: rla_array
   real(kind=dbl_kind), dimension(:), allocatable :: rla_bufsend
-  real(kind=dbl_kind), dimension(:,:), allocatable :: vwork2d
-    !local domain work array, 4 coupling data passing 
+  real(kind=dbl_kind), dimension(:,:), allocatable :: vwork2d !local domain work array, for coupling data passing 
   contains
 
 !======================================================================
@@ -495,6 +494,11 @@
     cl_writ(nsend_i2o)='co2_i1'
     nsend_i2o = nsend_i2o + 1
     cl_writ(nsend_i2o)='wnd_i1'
+    !202407: 2 more added:
+    nsend_i2o = nsend_i2o + 1
+    cl_writ(nsend_i2o)='lice_fw'
+    nsend_i2o = nsend_i2o + 1
+    cl_writ(nsend_i2o)='lice_ht'
 
     if (my_task == 0 .or. ll_comparal) then
 
@@ -649,6 +653,13 @@
   allocate (um_bmlt(nx_block,ny_block,ncat,max_blocks)); um_bmlt(:,:,:,:) = 0
   allocate (um_co2(nx_block,ny_block,max_blocks)); um_co2(:,:,:) = 0
   allocate (um_wnd(nx_block,ny_block,max_blocks)); um_wnd(:,:,:) = 0
+  !202407: 6 more arrays added (for land ice discharge into ocean, but no need for ESM case which always reads iceberg flux)
+  !allocate (lice_nth(nx_block,ny_block,max_blocks)); lice_nth(:,:,:) = 0
+  !allocate (lice_sth(nx_block,ny_block,max_blocks)); lice_sth(:,:,:) = 0
+  !allocate (msk_nth(nx_block,ny_block,max_blocks));  msk_nth(:,:,:) = 0
+  !allocate (msk_sth(nx_block,ny_block,max_blocks));  msk_sth(:,:,:) = 0
+  !allocate (amsk_nth(nx_block,ny_block,max_blocks)); amsk_nth(:,:,:) = 0
+  !allocate (amsk_sth(nx_block,ny_block,max_blocks)); amsk_sth(:,:,:) = 0
 
   !
   allocate ( core_runoff(nx_block,ny_block,max_blocks));  core_runoff(:,:,:) = 0.
@@ -695,6 +706,9 @@
   allocate (io_form(nx_block,ny_block,max_blocks));  io_form(:,:,:) = 0
   allocate (io_co2(nx_block,ny_block,max_blocks));  io_co2(:,:,:) = 0
   allocate (io_wnd(nx_block,ny_block,max_blocks));  io_wnd(:,:,:) = 0
+ !202407: 2 more added
+  allocate (io_licefw(nx_block,ny_block,max_blocks)); io_licefw(:,:,:) = 0
+  allocate (io_liceht(nx_block,ny_block,max_blocks)); io_liceht(:,:,:) = 0
 
   ! temporary arrays:
   ! IO cpl int time-average
@@ -715,15 +729,39 @@
   allocate (mssv(nx_block,ny_block,max_blocks));  mssv(:,:,:) = 0
   allocate (mco2(nx_block,ny_block,max_blocks));  mco2(:,:,:) = 0
   allocate (mco2fx(nx_block,ny_block,max_blocks));  mco2fx(:,:,:) = 0
-! IA cpl int time-average (4D)
+ ! IA cpl int time-average (4D)
   allocate (maicen(nx_block,ny_block,ncat,max_blocks)); maicen(:,:,:,:) = 0
   allocate (msnown(nx_block,ny_block,ncat,max_blocks)); msnown(:,:,:,:) = 0
   allocate (mthikn(nx_block,ny_block,ncat,max_blocks)); mthikn(:,:,:,:) = 0
 
   allocate (vwork(nx_block,ny_block,max_blocks)); vwork(:,:,:) = 0
   allocate (gwork(nx_global,ny_global)); gwork(:,:) = 0
+  allocate (gicebergfw(nx_global,ny_global,12)); gicebergfw(:,:,:) = 0
   allocate (sicemass(nx_block,ny_block,max_blocks)); sicemass(:,:,:) = 0.
   allocate (vwork2d(l_ilo:l_ihi, l_jlo:l_jhi)); vwork2d(:,:) = 0. !l_ihi-l_ilo+1, l_jhi-l_jlo+1
+  !202407-10: variables associated with iceberg flux and runoff wet-mask:
+  allocate (icebergfw(nx_block,ny_block,12,max_blocks)); icebergfw(:,:,:,:) = 0
+  !global domain runoff for runoff "deduction"  
+  allocate (grunoff(nx_global,ny_global)); grunoff(:,:) = 0
+  allocate (gtarea(nx_global,ny_global)); gtarea(:,:) = 0
+  allocate (gwet(nx_global,ny_global)); gwet(:,:) = 0
+  allocate (ticeberg_s(12)); ticeberg_s(:) = 0
+  allocate (ticeberg_n(12)); ticeberg_n(:) = 0
+  !202408: some diagnostic variables (tendencies): ----------------------------
+  !!allocate (mdaidtt(nx_block,ny_block,max_blocks)); mdaidtt(:,:,:) = 0
+  !!allocate (mdaidtd(nx_block,ny_block,max_blocks)); mdaidtd(:,:,:) = 0
+  !!allocate (mdvidtt(nx_block,ny_block,max_blocks)); mdvidtt(:,:,:) = 0
+  !!allocate (mdvidtd(nx_block,ny_block,max_blocks)); mdvidtd(:,:,:) = 0
+  !!allocate (mdvsdtt(nx_block,ny_block,max_blocks)); mdvsdtt(:,:,:) = 0
+  !!allocate (mdvsdtd(nx_block,ny_block,max_blocks)); mdvsdtd(:,:,:) = 0
+  !if (tr_iage) then
+  !  allocate (mdagedtt(nx_block,ny_block,max_blocks)); mdagedtt(:,:,:) = 0
+  !  allocate (mdagedtd(nx_block,ny_block,max_blocks)); mdagedtd(:,:,:) = 0
+  !endif
+  !
+  !allocate (xxxxx(nx_block,ny_block,max_blocks)); xxxxx(:,:,:) = 0
+  !-----------------------------------------------------------------------------
+
   end subroutine init_cpl
 
 !=======================================================================
@@ -845,6 +883,9 @@
     case ('press_i'); um_press(1+nghost:nx_block-nghost,1+nghost:ny_block-nghost,1) = vwork2d(:,:)
     case ('co2_ai'); um_co2(1+nghost:nx_block-nghost,1+nghost:ny_block-nghost,1) = vwork2d(:,:)
     case ('wnd_ai'); um_wnd(1+nghost:nx_block-nghost,1+nghost:ny_block-nghost,1) = vwork2d(:,:)
+    !202407: landice terms added (no need for ESM)
+    !case ('icenth_i');um_icenth(1+nghost:nx_block-nghost,1+nghost:ny_block-nghost,1) = vwork2d(:,:)
+    !case ('icesth_i');um_icesth(1+nghost:nx_block-nghost,1+nghost:ny_block-nghost,1) = vwork2d(:,:)
     end select 
 
     if (my_task == 0 .or. ll_comparal) then
@@ -872,6 +913,9 @@
     call ice_HaloUpdate(um_press, halo_info, field_loc_center,field_type_vector)
     call ice_HaloUpdate(um_co2, halo_info, field_loc_center, field_type_vector)
     call ice_HaloUpdate(um_wnd, halo_info, field_loc_center, field_type_vector)
+    !202407: landice terms added (no need for ESM)
+    !call ice_HaloUpdate(um_icenth,halo_info, field_loc_center,field_type_vector)
+    !call ice_HaloUpdate(um_icesth,halo_info, field_loc_center,field_type_vector)
 
   IF (rotate_winds) THEN   !rotate_winds=.t. means oasis does not do the vector rotation.
 
@@ -1100,6 +1144,9 @@
     case('form_io');  vwork = io_form
     case('co2_i1'); vwork = io_co2
     case('wnd_i1'); vwork = io_wnd
+    !202407: 2 more added
+    case('lice_fw'); vwork = io_licefw
+    case('lice_ht'); vwork = io_liceht
     end select
     
     if(.not. ll_comparal) then 

@@ -340,6 +340,20 @@
       ! *** 				at the beginning of next run			       ***
       call save_restart_mice('mice.nc',stimestamp_io) 
 
+      !202408:
+      !!if (mdiag_restart) then 
+      !!  mdaidtt(:,:,:) = daidtt(:,:,:)
+      !!  mdaidtd(:,:,:) = daidtd(:,:,:)
+      !!  mdvidtt(:,:,:) = dvidtt(:,:,:)
+      !!  mdvidtd(:,:,:) = dvidtd(:,:,:)
+      !!  mdvsdtt(:,:,:) = dvsdtt(:,:,:)
+      !!  mdvsdtd(:,:,:) = dvsdtd(:,:,:)
+        !if (tr_iage) then
+        !  mdagedtt(:,:,:) = dagedtt(:,:,:)
+        !  mdagedtd(:,:,:) = dagedtd(:,:,:)
+        !endif
+        !!call save_diag_restart('mdiag_restart.nc',stimestamp_io)
+      !!endif
 #else
 
       timeLoop: do
@@ -896,7 +910,7 @@
          i,j         , & ! horizontal indices
          ilo,ihi,jlo,jhi ! beginning and end of physical domain
 
-      real (kind=dbl_kind) :: cszn ! counter for history averaging
+      real (kind=dbl_kind) :: & cszn
 
       call ice_timer_start(timer_column)
 
@@ -988,7 +1002,6 @@
       !-----------------------------------------------------------------
 
 #ifdef AusCOM   
-       !20091020 -- MUST re-visit this part immediately! 
        if (do_scale_fluxes) then !(ch...) this should be done.
 #endif
          call scale_fluxes (nx_block,            ny_block,           &

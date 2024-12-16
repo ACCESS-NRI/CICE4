@@ -227,6 +227,10 @@
            f_sig1      = 'm', f_sig2       = 'm', &
            f_dvidtt    = 'm', f_dvidtd     = 'm', &
            f_daidtt    = 'm', f_daidtd     = 'm', &
+           !202408: -----------------------------------
+           f_dvsdtt    = 'm', f_dvsdtd     = 'm', &
+           !f_dagedtt   = 'm', f_dagedtd    = 'm', &
+           !-------------------------------------------
            f_mlt_onset = 'm', f_frz_onset  = 'm', &
            f_dardg1dt  = 'm', f_dardg2dt   = 'm', &
            f_dvirdgdt  = 'm', f_iage       = 'x', &
@@ -296,6 +300,10 @@
            f_sig1,      f_sig2     , &
            f_dvidtt,    f_dvidtd   , &
            f_daidtt,    f_daidtd   , &
+           !202408:--------------------------
+           f_dvsdtt,    f_dvsdtd   , &
+           !f_dagedtt,   f_dagedtd  , &
+           !---------------------------------
            f_mlt_onset, f_frz_onset, &
            f_dardg1dt,  f_dardg2dt , &
            f_dvirdgdt,  f_iage     , &
@@ -377,6 +385,10 @@
            n_sig1       , n_sig2       , &
            n_dvidtt     , n_dvidtd     , &
            n_daidtt     , n_daidtd     , &
+           !202408:---------------------------
+           n_dvsdtt     , n_dvsdtd     , &
+           !n_dagedtt    , n_dagedtd    , &
+           !----------------------------------
            n_mlt_onset  , n_frz_onset  , &
            n_dardg1dt   , n_dardg2dt   , &
            n_dvirdgdt   , &
@@ -614,6 +626,12 @@
       call broadcast_scalar (f_dvidtd, master_task)
       call broadcast_scalar (f_daidtt, master_task)
       call broadcast_scalar (f_daidtd, master_task)
+      !202408:-------------------------------------------
+      call broadcast_scalar (f_dvsdtt, master_task)
+      call broadcast_scalar (f_dvsdtd, master_task)
+      !call broadcast_scalar (f_dagedtt, master_task)
+      !call broadcast_scalar (f_dagedtd, master_task)
+      !--------------------------------------------------
       call broadcast_scalar (f_mlt_onset, master_task)
       call broadcast_scalar (f_frz_onset, master_task)
       call broadcast_scalar (f_dardg1dt, master_task)
@@ -1088,6 +1106,32 @@
              "none", secday*c100, c0,                                  &
              ns1, f_daidtd)
       
+      !202408:-----------------------------------------------------------------
+      if (f_dvsdtt(1:1) /= 'x') &
+         call define_hist_field(n_dvsdtt,"dvsdtt","cm/day",tstr2D, tcstr, &
+             "snow volume tendency thermo",                                  &
+             "none", mps_to_cmpdy, c0,                                  &
+             ns1, f_dvsdtt)
+
+      if (f_dvsdtd(1:1) /= 'x') &
+         call define_hist_field(n_dvidtd,"dvsdtd","cm/day",tstr2D, tcstr, &
+             "snow volume tendency dynamics",                                &
+             "none", mps_to_cmpdy, c0,                                  &
+             ns1, f_dvsdtd)
+
+      !if (f_dagedtt(1:1) /= 'x') &
+      !   call define_hist_field(n_dvsdtt,"dagedtt","day/day",tstr2D, tcstr, &
+      !       "age tendency thermo",                                  &
+      !       "excludes time step increment", mps_to_cmpdy, c0,          &
+      !       ns1, f_dagedtt)
+      !
+      !if (f_dagedtd(1:1) /= 'x') &
+      !   call define_hist_field(n_dagedtd,"dagedtd","day/day",tstr2D, tcstr, &
+      !       "age tendency dynamics",                                &
+      !       "excludes time step increment", mps_to_cmpdy, c0,          &
+      !       ns1, f_dagedtd) 
+      !------------------------------------------------------------------------
+
       if (f_mlt_onset(1:1) /= 'x') &
          call define_hist_field(n_mlt_onset,"mlt_onset","day of year", &
              tstr2D, tcstr,"melt onset date",                            &
@@ -1643,7 +1687,18 @@
              call accum_hist_field(n_daidtt,  iblk, daidtt(:,:,iblk), a2D)
          if (f_daidtd (1:1) /= 'x') &
              call accum_hist_field(n_daidtd,  iblk, daidtd(:,:,iblk), a2D)
-
+         !202408:---------------------------------------------------------------
+         if (f_dvsdtt (1:1) /= 'x') &
+             call accum_hist_field(n_dvsdtt,  iblk, dvsdtt(:,:,iblk), a2D)
+         if (f_dvsdtd (1:1) /= 'x') &
+             call accum_hist_field(n_dvsdtd,  iblk, dvsdtd(:,:,iblk), a2D)
+         !if (tr_iage) then
+         !  if (f_dagedtt (1:1) /= 'x') &
+         !      call accum_hist_field(n_dagedtt,  iblk, dagedtt(:,:,iblk), a2D)
+         !  if (f_dagedtd (1:1) /= 'x') &
+         !      call accum_hist_field(n_dagedtd,  iblk, dagedtd(:,:,iblk), a2D)
+         !endif 
+         !----------------------------------------------------------------------
          if (f_opening(1:1) /= 'x') &
              call accum_hist_field(n_opening, iblk, opening(:,:,iblk), a2D)
          if (f_dardg1dt(1:1)/= 'x') &

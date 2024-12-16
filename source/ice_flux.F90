@@ -29,7 +29,16 @@
       use ice_blocks
       use ice_domain_size
       use ice_constants
-!
+      !202408:
+      !xxx
+      !!!!use ice_domain, only : distrb_info
+      !!!!use ice_communicate  !, only : my_task, master_task
+      !!!!use ice_gather_scatter
+      !xxx
+      !!!!use cpl_parameters, only : mdiag_restart, inputdir, file_exist
+      !use ice_age, only : tr_iage !==> currently can't handle tracer tendencies.
+      !!!!use cpl_arrays_setup, only : &
+      !!!!        mdaidtt, mdvidtt, mdvsdtt, mdaidtd, mdvidtd, mdvsdtd, gwork !, magedtt, magedtd
 !EOP
 !
       implicit none
@@ -38,6 +47,10 @@
       !-----------------------------------------------------------------
       ! Dynamics component
       !-----------------------------------------------------------------
+
+      !xxx
+      integer :: iii, jjj
+      !xxx
 
       real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks) :: &
 
@@ -75,6 +88,10 @@
          strinty , & ! divergence of internal ice stress, y (N/m^2)
          daidtd  , & ! ice area tendency due to transport   (1/s)
          dvidtd  , & ! ice volume tendency due to transport (m/s)
+         !202408: add more diagnostic fields ---------------------------
+         dvsdtd  , & ! snow volume tendency due to transport (m/s)
+         dagedtd , & ! ice age tendency due to transport (s/s)
+         !--------------------------------------------------------------
          dardg1dt, & ! rate of area loss by ridging ice (1/s)
          dardg2dt, & ! rate of area gain by new ridges (1/s)
          dvirdgdt, & ! rate of ice volume ridged (m/s)
@@ -234,8 +251,13 @@
          melts , & ! snow melt                (m/step-->cm/day)
          meltb , & ! basal ice melt           (m/step-->cm/day)
          meltl , & ! lateral ice melt         (m/step-->cm/day)
+         dsnow,  & ! change in snow thickness (m/step-->cm/day)
+         !202408:-----------------------------------------------------------
          daidtt, & ! ice area tendency thermo.   (s^-1)
          dvidtt, & ! ice volume tendency thermo. (m/s)
+         dvsdtt, & ! snow volume tendency thermo. (m/s)
+         dagedtt,& ! ice age tendency thermo.    (s/s)
+         !------------------------------------------------------------------
          mlt_onset, &! day of year that sfc melting begins
          frz_onset   ! day of year that freezing begins (congel or frazil)
          
@@ -529,7 +551,7 @@
 !
 !EOP
 !
-      use ice_state, only: aice, vice
+      use ice_state, only: aice, vice, vsno
 
       fsurf  (:,:,:) = c0
       fcondtop(:,:,:)= c0
@@ -539,9 +561,35 @@
       meltt  (:,:,:) = c0
       melts  (:,:,:) = c0
       meltb  (:,:,:) = c0
-      meltl  (:,:,:) = c0
-      daidtt (:,:,:) = aice(:,:,:) ! temporary initial area
-      dvidtt (:,:,:) = vice(:,:,:) ! temporary initial volume
+      daidtt  (:,:,:) = aice(:,:,:) ! temporary initial area
+      dvidtt  (:,:,:) = vice(:,:,:) ! temporary initial volume
+      dvsdtt  (:,:,:) = vsno(:,:,:) ! temporary initial volume
+      !!!xxx
+      !call save_diag_restart00('time0_3var.nc',0)
+      !
+      !!!!call gather_global(gwork, aice, master_task, distrb_info)
+      !!!!write(101,'(360e13.6)')((gwork(iii,jjj),iii=1,nx_global),jjj=1,ny_global)
+      !!!!call gather_global(gwork, vice, master_task, distrb_info)
+      !!!!write(102,'(360e13.6)')((gwork(iii,jjj),iii=1,nx_global),jjj=1,ny_global)
+      !!!!call gather_global(gwork, vsno, master_task, distrb_info)
+      !!!!write(103,'(360e13.6)')((gwork(iii,jjj),iii=1,nx_global),jjj=1,ny_global)
+      !stop
+      !xxx
+      !if (tr_iage) then
+      !   dagedtt (:,:,:) = trcr(:,:,nt_iage,:) ! temporary initial age
+      !else
+      !   dagedtt(:,:,:) = c0
+      !endif     
+      !202408: 'restart' data read in from mdiag_restart.nc
+      !!!!if (mdiag_restart .and. &
+      !!!!    file_exist(trim(inputdir)//'/mdiag_restart.nc')) then  
+      !!!!  daidtt  (:,:,:) = mdaidtt(:,:,:)
+      !!!!  dvidtt  (:,:,:) = mdvidtt(:,:,:)
+      !! !! dvsdtt  (:,:,:) = mdvsdtt(:,:,:)
+        !if (tr_iage) &
+        !   dagedtt (:,:,:) = mdagedtt(:,:,:) 
+      !!!!endif
+      !--------------------------------------------------
       fsurfn    (:,:,:,:) = c0
       fcondtopn (:,:,:,:) = c0
       flatn     (:,:,:,:) = c0
@@ -576,7 +624,7 @@
 ! !USES:
 !
       use ice_domain, only: nblocks
-      use ice_state, only: aice, vice
+      use ice_state, only: aice, vice, vsno
 !
 ! !INPUT/OUTPUT PARAMETERS:
 !
@@ -598,6 +646,19 @@
       opening (:,:,:) = c0
       daidtd  (:,:,:) = aice(:,:,:) ! temporary initial area
       dvidtd  (:,:,:) = vice(:,:,:) ! temporary initial volume
+      dvsdtd  (:,:,:) = vsno(:,:,:) ! temporary initial volume
+      !if (tr_iage) &
+      !   dagedtd (:,:,:) = trcr(:,:,nt_iage,:) ! temporary initial age
+      !202408: intialise tendendy variables with data from last run
+      !!!!if (mdiag_restart .and. &
+      !!!!    file_exist(trim(inputdir)//'/mdiag_restart.nc')) then
+      !!!!  daidtd  (:,:,:) = mdaidtd(:,:,:)
+      !!!!  dvidtd  (:,:,:) = mdvidtd(:,:,:)
+      !!!!  dvsdtd  (:,:,:) = mdvsdtd(:,:,:)
+        !if (tr_iage) &
+        !   dagedtd (:,:,:) = mdagedtd(:,:,:) ! temporary initial age
+      !!!!endif  
+      !-----------------------------------------------------------------
       fm      (:,:,:) = c0
       prs_sig (:,:,:) = c0
 

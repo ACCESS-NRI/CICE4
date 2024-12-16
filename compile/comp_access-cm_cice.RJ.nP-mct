@@ -49,9 +49,9 @@ echo SRCDIR: $SRCDIR
  
 ### Location and names of coupling libraries and inclusions
 if ( $ACCESS == 'yes' ) then
-  setenv CPLLIBDIR /projects/access/apps/oasis3-mct/ompi.1.10.2/lib
-  setenv CPLINCDIR /projects/access/apps/oasis3-mct/ompi.1.10.2/include
-  setenv CPL_INCS '-I$(CPLINCDIR)'
+  setenv CPLLIBDIR /g/data/p66/pbd562/test/t47-hxw/jan20/4.0.2/oasis3-mct/Linux/lib
+  setenv CPLINCDIR /g/data/p66/pbd562/test/t47-hxw/jan20/4.0.2/oasis3-mct/lib/psmile/include
+  setenv CPL_INCS '-I$(CPLINCDIR)/psmile.$(CHAN) -I$(CPLINCDIR)/pio -I$(CPLINCDIR)/mct'
   echo CPL_INCS: $CPL_INCS
 endif
  
@@ -154,7 +154,7 @@ else
 endif
 echo COMMDIR: $COMMDIR
 
-module list   
+#module list   
                                                                              
 setenv DRVDIR cice4
                                                                                 

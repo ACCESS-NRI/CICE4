@@ -134,7 +134,7 @@
         print_global,   print_points,   latpnt,          lonpnt,        &
         dbug,           histfreq,       histfreq_n,      hist_avg,      &
         history_dir,    history_file,   history_format,                 &
-        write_ic,       incond_dir,     incond_file
+        write_ic,       incond_dir,     incond_file 
 
       namelist /grid_nml/ &
         grid_format,    grid_type,       grid_file,     kmt_file,       &

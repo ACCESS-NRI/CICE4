@@ -80,9 +80,14 @@ module cpl_arrays_setup
 !(16) co2                                               io_co2
 !(17) wind speed                                        io_wnd
 !
+! 202407: 2 more added for "iceberg melt" (induced from land ice discharge):
+!
+!(18) iceberg melt waterflux                            io_licefw
+!(19) iceberg melt heatflux                             io_liceht
+!
 ! Therefore, currently we have 
 ! 
-! 31 in, 33 out => thus we set jpfldout=33, jpfldin=31 in cpl_parameters.
+! (26 + 9) in, (20 + 19) out => thus we set jpfldout=39, jpfldin=35 in cpl_parameters.
 !
 !----------------------------------------------------------------------------
 ! This module will be largely modified/'simplifed after ACCESS works !
@@ -99,6 +104,9 @@ real(kind=dbl_kind), dimension(:,:,:), allocatable :: &   !from atm (UM)
     um_thflx, um_pswflx, um_runoff, um_wme, um_snow, um_rain, &
     um_evap,  um_lhflx,  um_taux,   um_tauy, &
     um_swflx, um_lwflx,  um_shflx,  um_press,um_co2, um_wnd
+!202407 added for calculation of land ice increment (actually not used when iceberg flux is read in)
+!real(kind=dbl_kind), dimension(:,:,:), allocatable :: &   !from atm (UM)
+    !lice_nth, lice_sth, msk_nth, msk_sth, amsk_nth, amsk_sth
 real(kind=dbl_kind), dimension(:,:,:,:), allocatable :: &   
     um_tmlt, um_bmlt
 
@@ -111,7 +119,7 @@ real(kind=dbl_kind), dimension(:,:,:), allocatable :: &   !from ocn (MOM4)
     ocn_co2, ocn_co2fx  
 
 real(kind=dbl_kind), dimension(:,:), allocatable :: gwork
-    !global domain work array, 4 coupling data passing and global data output. 
+    !global domain work array, for coupling data passing and global data output. 
 real(kind=dbl_kind), dimension(:,:,:), allocatable :: vwork  
     !local domain work array.
 
@@ -125,7 +133,8 @@ real(kind=dbl_kind), dimension(:,:,:,:), allocatable :: &
 real(kind=dbl_kind),dimension(:,:,:), allocatable :: &     !to ocn (time averaged)
     io_strsu, io_strsv, io_rain,  io_snow,  io_stflx, io_htflx, io_swflx, &
     io_qflux, io_shflx, io_lwflx, io_runof, io_press, io_aice, &
-    io_melt, io_form, io_co2, io_wnd
+    io_melt, io_form, io_co2, io_wnd, &
+    io_licefw, io_liceht         !2 more added 202407
 
 ! Temporary arrays
 !==================
@@ -144,12 +153,29 @@ real(kind=dbl_kind),dimension(:,:,:), allocatable :: &
 real(kind=dbl_kind),dimension(:,:,:), allocatable :: &
     msst, mssu, mssv, mco2, mco2fx
 
+!202408 (mvice etc and associated read, write are defined directly in CICE_init.F90) 
+!4. some ice diagnotic variables for tendency calculation:
+!!real(kind=dbl_kind),dimension(:,:,:), allocatable :: &
+!!    mdaidtt, mdvidtt, mdvsdtt, mdaidtd, mdvidtd, mdvsdtd !, magedtt, magedtd
 
 ! other stuff 
 !============
 real(kind=dbl_kind),dimension(:,:,:), allocatable :: & 
     sicemass   !ice mass
 
+real(kind=dbl_kind),dimension(:,:,:,:), allocatable :: &
+    icebergfw      !read-in land ice discharge into ocean as monthly iceberg melt waterflux ==>io_licefw
+real(kind=dbl_kind),dimension(:,:,:), allocatable :: &
+    gicebergfw     !monthly iceberg flux on global domain 
+!202407-10: note gwet added here is landsea mask for global domain (1 = wet, 0 = dry), 
+!passed from kmt.nc which is read in ice_grid. It is used to axe off "extra" runoff for 
+!global/domain "effective" runoff amount calculation, required by the "iceberg scheme"!    
+real(kind=dbl_kind),dimension(:,:), allocatable :: & 
+    gtarea,     &  !tarea on global domain
+    grunoff,    &  !runoff on global domain
+    gwet
+real(kind=dbl_kind),dimension(:), allocatable :: &
+    ticeberg_s, ticeberg_n  !monthly land ice off Anrarctica and Greenland (NH) 
 !===========================================================================
 end module cpl_arrays_setup
 
