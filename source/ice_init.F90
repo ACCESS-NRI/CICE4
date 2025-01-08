@@ -163,7 +163,7 @@
         oceanmixed_ice, ocn_data_format, sss_data_type, sst_data_type,  &
         ocn_data_dir,   oceanmixed_file, restore_sst,   trestore,       &
         restore_ice    
-
+ 
       namelist /tracer_nml/   &
         tr_iage, restart_age, &
         tr_lvl, restart_lvl, &
