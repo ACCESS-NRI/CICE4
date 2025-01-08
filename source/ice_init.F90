@@ -68,7 +68,7 @@
       use ice_diagnostics
       use ice_fileunits
       use ice_calendar, only: year_init, istep0, histfreq, histfreq_n, &
-                              dumpfreq, dumpfreq_n, diagfreq, nstreams, &
+                              dumpfreq, dumpfreq_n, dump_last, diagfreq, nstreams, &
                               npt, dt, ndyn_dt, days_per_year, write_ic
       use ice_restart, only: &
           restart, restart_dir, restart_file, pointer_file, &
@@ -130,7 +130,7 @@
         runtype,        runid,                                          &
         ice_ic,         restart,        restart_dir,     restart_file,  &
         pointer_file,   dumpfreq,       dumpfreq_n,                     &
-        diagfreq,       diag_type,      diag_file,                      &
+        diagfreq,       dump_last,      diag_type,       diag_file,     &
         print_global,   print_points,   latpnt,          lonpnt,        &
         dbug,           histfreq,       histfreq_n,      hist_avg,      &
         history_dir,    history_file,   history_format,                 &
@@ -199,6 +199,7 @@
       incond_file = 'iceh_ic'! file prefix
       dumpfreq='y'           ! restart frequency option
       dumpfreq_n = 1         ! restart frequency
+      dump_last = .true.     ! write restart at end of run
       restart = .false.      ! if true, read restart files for initialization
       restart_dir  = ' '     ! write to executable dir for default
       restart_file = 'iced'  ! restart file name prefix
@@ -436,6 +437,7 @@
       call broadcast_scalar(incond_file,        master_task)
       call broadcast_scalar(dumpfreq,           master_task)
       call broadcast_scalar(dumpfreq_n,         master_task)
+      call broadcast_scalar(dump_last,          master_task)
       call broadcast_scalar(restart_file,       master_task)
       call broadcast_scalar(restart,            master_task)
       call broadcast_scalar(restart_dir,        master_task)
@@ -567,6 +569,7 @@
          write(nu_diag,1030) ' dumpfreq                  = ', &
                                trim(dumpfreq)
          write(nu_diag,1020) ' dumpfreq_n                = ', dumpfreq_n
+         write(nu_diag,1010) ' dump_last                = ', dump_last
          write(nu_diag,1010) ' restart                   = ', restart
          write(nu_diag,*)    ' restart_dir               = ', &
                                trim(restart_dir)

@@ -29,6 +29,7 @@
       use cpl_parameters, only : inidate, iniday, inimon, iniyear, init_date
       use cpl_parameters, only : il_out, caltype
       use cpl_parameters, only : runtime0 !accumulated runtime by the end of last run
+      use cpl_parameters, only : runtime  !total runtime for current run
 #endif
 !
 !
@@ -105,7 +106,8 @@
          new_day        , & ! new day = .true.
          new_hour       , & ! new hour = .true.
          write_ic       , & ! write initial condition now
-         write_history(max_nstrm) ! write history now
+         write_history(max_nstrm), & ! write history now
+         dump_last          ! write restart at last time step
 
       character (len=1) :: &
          histfreq(max_nstrm), & ! history output frequency, 'y','m','d','h','1'
@@ -374,6 +376,12 @@
                 write_restart = 1
         end select
       
+        if ((ttime == runtime) .and. dump_last) then
+            write(il_out,*) '(calendar) SPENCER, WRITING LAST'
+            write(nu_diag,*) '(calendar) SPENCER, WRITING LAST'
+            write_restart = 1
+        endif
+
       endif !  istep > 1
 
       if (my_task == master_task .and. mod(istep,diagfreq) == 0 &
