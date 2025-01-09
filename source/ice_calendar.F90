@@ -375,12 +375,6 @@
           if (new_day   .and. mod(elapsed_days, dumpfreq_n)==0) &
                 write_restart = 1
         end select
-      
-        if ((ttime == runtime) .and. dump_last) then
-            write(il_out,*) '(calendar) SPENCER, WRITING LAST'
-            write(nu_diag,*) '(calendar) SPENCER, WRITING LAST'
-            write_restart = 1
-        endif
 
       endif !  istep > 1
 

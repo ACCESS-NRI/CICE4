@@ -222,6 +222,13 @@
         call initialize_mice_fields_4_i2o
 
         do itap = 1, num_ice_io   ! cice time loop within each i<=>o cpl interval 
+            
+            ! write restart on final time step
+            if (dump_last .and. icpl_ai == num_cpl_ai .and. &
+                icpl_io == num_cpl_io .and. itap == num_ice_io) then
+                    write(il_out,*) 'SPENCER: FINAL TIMESTEP'
+                    write_restart = 1
+            endif
 
            !------------------------------------------------------------------------------
            !* see comments above
